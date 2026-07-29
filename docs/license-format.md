@@ -5,11 +5,10 @@
 * **Algorithm: Ed25519** (via the `cryptography` package,
   `cryptography.hazmat.primitives.asymmetric.ed25519`). Deterministic
   signatures, small keys (32-byte public, 32-byte seed), fast verification on
-  desktop hardware, no parameter choices to get wrong (unlike RSA padding or
-  ECDSA curve/nonce selection). No documented compatibility reason to deviate.
+  desktop hardware
 * **Signing is for authenticity/integrity, not secrecy.** The payload is
   transmitted and stored as plaintext JSON; only the signature is
-  cryptographic. This is intentional per the spec — do not encrypt.
+  cryptographic.
 * **Canonical serialization: JCS-style deterministic JSON** — see below.
 * **Envelope**, returned to the desktop app as a single versioned JSON object:
 
@@ -37,37 +36,13 @@
 }
 ```
 
-## Canonical serialization rule
-
-To make "the bytes that were signed" unambiguous and reproducible in any
-language:
-
-1. Take the payload as a JSON object with **exactly** the keys defined by the
-   schema (no extra keys, no omitted keys).
-2. Serialize using JSON with:
-   * UTF-8 encoding
-   * Object keys sorted lexicographically by Unicode code point
-     (`sort_keys=True`)
-   * No insignificant whitespace (`separators=(",", ":")`)
-   * No trailing newline
-3. The resulting byte string is the message signed/verified by Ed25519.
-
-This is implemented once, in `src/licensing/licensing/canonical.py`, and used
-identically for signing (server) and for the reference verifier (tests, and
-later the desktop client port). It is deliberately a subset of RFC 8785 (JCS)
-sufficient for our fixed, flat/shallow schema — full JCS number/unicode
-normalization is unnecessary because every field is a string, int, or list of
-strings.
-
 ## Field trust rules
 
 * `product_code`, `edition_code`, `features`, `organization_id`, `device_id`
   are **never taken from client input** at issuance time — they are derived
   server-side from the authenticated device activation, its organization
   license, and the edition's granted features at the moment of signing.
-  Issuance happens exactly once, at activation completion — there is no
-  renewal call that re-derives/re-signs these later (licenses are lifetime
-  grants; see `docs/threat-model.md`).
+  Issuance happens exactly once, at activation completion.
 * `device_public_key_hash` is SHA-256 of the exact public key bytes stored in
   `device_activations.device_public_key` — binding the certificate to one
   registered device.

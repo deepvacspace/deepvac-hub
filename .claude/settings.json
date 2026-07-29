@@ -37,7 +37,11 @@
       "Bash(curl -s -b /tmp/final_cookies.txt -c /tmp/final_cookies.txt http://localhost:8080/licenses/679fbe2d-d169-4c5c-a2b7-c390ea7dc053 -w '\\\\nstatus: %{http_code}\\\\n' -o /tmp/lic_final.html)",
       "Bash(curl -s -X POST http://localhost:8080/api/v1/activations/a571d685-c599-40ff-b793-b2a6b4c5d074/complete -H 'Content-Type: application/json' -d '{\"device_public_key\":\"__TRACKED_VAR__\",\"display_name\":\"Plain Member Device\"}' -o /tmp/complete3.json -w 'complete: %{http_code}\\\\n')",
       "Bash(curl -s -b /tmp/vendor_cookies.txt -c /tmp/vendor_cookies.txt http://localhost:8080/dashboard -w '\\\\ndashboard status: %{http_code}\\\\n' -o /tmp/dash.html)",
-      "Bash(curl -s -b /tmp/vendor_cookies.txt -c /tmp/vendor_cookies.txt http://localhost:8080/organizations/9c645f38-0df1-4f11-8767-33575c0927f3 -w '\\\\norg detail status: %{http_code}\\\\n' -o /dev/null)"
+      "Bash(curl -s -b /tmp/vendor_cookies.txt -c /tmp/vendor_cookies.txt http://localhost:8080/organizations/9c645f38-0df1-4f11-8767-33575c0927f3 -w '\\\\norg detail status: %{http_code}\\\\n' -o /dev/null)",
+      "Bash(xargs grep -l \"Limiter\\\\|rate_limit\\\\|ratelimit\")",
+      "Bash(docker info *)",
+      "Bash(ls \"/c/Program Files/Docker/Docker/Docker Desktop.exe\" 2>&1)",
+      "Bash(break)"
     ]
   }
 }
