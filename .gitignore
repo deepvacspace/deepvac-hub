@@ -13,3 +13,5 @@ dist/
 build/
 .coverage
 htmlcov/
+
+.claude/
