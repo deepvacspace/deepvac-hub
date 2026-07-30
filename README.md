@@ -52,11 +52,11 @@ hub/
 | Section | Routes |
 |---|---|
 | Auth | `/login`, `/logout`, `/account/password` |
-| Dashboard | `/` — active org/license/device counts |
+| Dashboard | `/` — active org/license/device counts, licenses expiring soon |
 | Organizations | `/organizations`, `/organizations/new`, `/organizations/<id>` (edit/disable/memberships/licenses/devices) |
 | Users | `/users`, `/users/new`, `/users/<id>` (disable/reactivate/reset-password/memberships/devices/security) |
 | Licenses | `/organizations/<id>/licenses/new`, `/licenses/<id>` (read-only overview, certificates) |
-| Devices | wip |
+| Devices | read-only, inline on organization/user detail pages |
 
 ## Sequence diagrams
 
