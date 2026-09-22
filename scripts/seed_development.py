@@ -47,6 +47,9 @@ DEMO_EDITION_CODE = "standard"
 ADMIN_DEMO_EMAIL = "admin-demo@example.com"
 ADMIN_DEMO_PASSWORD = "AdminDemoPass123!"
 
+ADMIN_DEMO_EMAIL = "admin-demo@example.com"
+ADMIN_DEMO_PASSWORD = "AdminDemoPass123!"
+
 PRODUCT_CODE = "deepvac-insight"
 
 EDITIONS = ["standard"]
