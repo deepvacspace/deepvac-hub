@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC
 
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sqlalchemy import select
 
 from apps.web.audit import log_event
@@ -13,6 +13,7 @@ from licensing.database import get_scoped_session
 from licensing.exceptions import LicensingError
 from licensing.models.enums import EditionStatus, ProductStatus
 from licensing.models.products import Edition, Product
+from licensing.services import auth as auth_service
 from licensing.services import licenses as licenses_service
 
 bp = Blueprint("licenses", __name__)
@@ -77,8 +78,38 @@ def detail(license_id: uuid.UUID):
     certificates = licenses_service.list_certificates_for_license(
         db, actor=user, license_id=license_id
     )
+    can_write = auth_service.can_vendor_write(user)
     return render_template(
         "licenses/detail.html",
         license=license_,
         certificates=certificates,
+        can_write=can_write,
     )
+
+
+@bp.route("/licenses/<uuid:license_id>/revoke", methods=["POST"])
+@login_required
+@vendor_required(write=True)
+def revoke(license_id: uuid.UUID):
+    db = get_scoped_session()
+    user = load_current_user()
+    organization_id = uuid.UUID(request.form["organization_id"])
+    try:
+        license_ = licenses_service.revoke_license(db, actor=user, license_id=license_id)
+        log_event(
+            db,
+            event_type="license_revoked",
+            actor_user_id=user.id,
+            organization_id=license_.organization_id,
+            target_type="organization_license",
+            target_id=str(license_.id),
+        )
+        db.commit()
+        flash("License revoked.", "success")
+    except LicensingError as exc:
+        db.rollback()
+        flash(str(exc), "error")
+    next_url = request.form.get("next") or url_for(
+        "organizations.detail", organization_id=organization_id
+    )
+    return redirect(next_url)

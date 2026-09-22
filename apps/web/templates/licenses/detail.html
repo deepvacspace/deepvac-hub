@@ -2,7 +2,25 @@
 {% block title %}License — Deepvac Hub{% endblock %}
 {% block content %}
 <div class="card wide">
-    <h1>{{ license.product.code }} / {{ license.edition.name }} <span class="badge status-{{ license.status.value }}">{{ license.status.value }}</span></h1>
+    <div class="toolbar">
+        <h1>{{ license.product.code }} / {{ license.edition.name }} <span class="badge status-{{ license.status.value }}">{{ license.status.value }}</span></h1>
+        {% if can_write and license.status.value != 'revoked' %}
+        <button popovertarget="revoke-license-{{ license.id }}" class="btn btn-danger">Revoke license</button>
+        <div id="revoke-license-{{ license.id }}" popover class="modal">
+            <h2>Revoke this license?</h2>
+            <p class="muted">{{ license.organization.name }} will lose access to this license. This cannot be undone.</p>
+            <div class="button-row">
+                <button popovertarget="revoke-license-{{ license.id }}" popovertargetaction="hide" class="btn btn-secondary">Cancel</button>
+                <form method="post" action="{{ url_for('licenses.revoke', license_id=license.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="organization_id" value="{{ license.organization_id }}">
+                    <input type="hidden" name="next" value="{{ url_for('licenses.detail', license_id=license.id) }}">
+                    <button type="submit" class="btn btn-danger">Revoke license</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
     <p><strong>Organization:</strong> <a href="{{ url_for('organizations.detail', organization_id=license.organization_id) }}">{{ license.organization.name }}</a></p>
     <p><strong>Device limit / user:</strong> {{ license.device_limit_per_user }}</p>
     <p><strong>Starts:</strong> {{ license.starts_at.strftime('%Y-%m-%d') }} &middot; <strong>Expires:</strong> {{ license.expires_at.strftime('%Y-%m-%d') }}</p>

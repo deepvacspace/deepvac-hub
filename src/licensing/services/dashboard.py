@@ -10,12 +10,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from licensing.models.devices import DeviceActivation
-from licensing.models.enums import (
-    DeviceActivationStatus,
-    OrganizationLicenseStatus,
-    OrganizationStatus,
-)
+from licensing.models.enums import OrganizationLicenseStatus, OrganizationStatus
 from licensing.models.licenses import OrganizationLicense
 from licensing.models.organizations import Organization
 from licensing.models.users import User
@@ -26,7 +21,6 @@ from licensing.services import auth as auth_service
 class DashboardSummary:
     active_organizations: int
     active_licenses: int
-    active_devices: int
     expiring_licenses: list[OrganizationLicense]
 
 
@@ -45,10 +39,6 @@ def get_summary(
         )
     ).scalar_one()
 
-    active_devices = session.execute(
-        select(func.count()).where(DeviceActivation.status == DeviceActivationStatus.ACTIVE)
-    ).scalar_one()
-
     horizon = datetime.now(UTC) + timedelta(days=expiring_within_days)
     expiring_licenses = list(
         session.execute(
@@ -64,6 +54,5 @@ def get_summary(
     return DashboardSummary(
         active_organizations=active_organizations,
         active_licenses=active_licenses,
-        active_devices=active_devices,
         expiring_licenses=expiring_licenses,
     )

@@ -15,9 +15,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from licensing.exceptions import ConflictError, NotFoundError
-from licensing.models.devices import DeviceActivation
 from licensing.models.enums import MembershipRole, MembershipStatus, OrganizationStatus
-from licensing.models.licenses import OrganizationLicense
 from licensing.models.organizations import Organization, OrganizationMembership
 from licensing.models.users import User
 from licensing.pagination import Page, paginate
@@ -135,23 +133,6 @@ def list_memberships(
             .where(OrganizationMembership.status == MembershipStatus.ACTIVE)
             .join(User, OrganizationMembership.user_id == User.id)
             .order_by(User.display_name)
-        ).scalars()
-    )
-
-
-def list_devices_for_org(
-    session: Session, *, actor: User, organization_id: uuid.UUID
-) -> list[DeviceActivation]:
-    auth_service.require_org_view(session, actor, organization_id)
-    return list(
-        session.execute(
-            select(DeviceActivation)
-            .join(
-                OrganizationLicense,
-                DeviceActivation.organization_license_id == OrganizationLicense.id,
-            )
-            .where(OrganizationLicense.organization_id == organization_id)
-            .order_by(DeviceActivation.created_at.desc())
         ).scalars()
     )
 

@@ -17,13 +17,34 @@
     </form>
     {% if page_result.items %}
     <table class="data">
-        <thead><tr><th>Name</th><th>Slug</th><th>Status</th></tr></thead>
+        <thead><tr><th>Name</th><th>Slug</th><th>Status</th><th>License</th>{% if can_write %}<th></th>{% endif %}</tr></thead>
         <tbody>
         {% for org in page_result.items %}
+            {% set license = current_licenses.get(org.id) %}
             <tr>
                 <td><a href="{{ url_for('organizations.detail', organization_id=org.id) }}">{{ org.name }}</a></td>
                 <td>{{ org.slug }}</td>
                 <td><span class="badge status-{{ org.status.value }}">{{ org.status.value }}</span></td>
+                <td>{% if license %}<span class="badge status-{{ license.status.value }}">{{ license.status.value }}</span>{% else %}<span class="muted">No license</span>{% endif %}</td>
+                {% if can_write %}
+                <td>
+                    {% if license and license.status.value != 'revoked' %}
+                    <button popovertarget="revoke-license-{{ license.id }}" class="btn btn-danger">Revoke license</button>
+                    <div id="revoke-license-{{ license.id }}" popover class="modal">
+                        <h2>Revoke this license?</h2>
+                        <p class="muted">{{ org.name }} will lose access to this license. This cannot be undone.</p>
+                        <div class="button-row">
+                            <button popovertarget="revoke-license-{{ license.id }}" popovertargetaction="hide" class="btn btn-secondary">Cancel</button>
+                            <form method="post" action="{{ url_for('licenses.revoke', license_id=license.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="organization_id" value="{{ org.id }}">
+                                <button type="submit" class="btn btn-danger">Revoke license</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
