@@ -1,14 +1,9 @@
-"""Organization license creation, plus the license-scoped certificate view
+"""Organization license lifecycle, plus the license-scoped certificate view
 used by the licenses/organizations blueprints.
 
-Licenses in this product are lifetime grants: there is no suspend/revoke/
-renew lifecycle (deliberately dropped -- see README.md's Phase D notes),
-and no per-user seat limit -- every active member of the organization is
-entitled to the licensed product/edition (see services/activation.py and
-README.md's Phase D notes for the "no seats" decision). Once created, a
-license's only state is what's set at creation time; the issued device
-certificates (services/issuance.py) carry their own long validity window
-independent of this record.
+Licenses have no per-user seat limit -- every active member of the
+organization is entitled to the licensed product/edition (see
+services/activation.py).
 """
 
 from __future__ import annotations
@@ -84,6 +79,39 @@ def list_licenses_for_org(
             .order_by(OrganizationLicense.created_at.desc())
         ).scalars()
     )
+
+
+def get_current_licenses_for_organizations(
+    session: Session, *, actor: User, organization_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, OrganizationLicense]:
+    """Returns each organization's most recently created license, keyed by
+    organization id. Organizations with no license are omitted."""
+    auth_service.require_vendor(actor)
+    if not organization_ids:
+        return {}
+    rows = session.execute(
+        select(OrganizationLicense)
+        .where(OrganizationLicense.organization_id.in_(organization_ids))
+        .order_by(OrganizationLicense.organization_id, OrganizationLicense.created_at.desc())
+    ).scalars()
+    current: dict[uuid.UUID, OrganizationLicense] = {}
+    for license_ in rows:
+        current.setdefault(license_.organization_id, license_)
+    return current
+
+
+def revoke_license(
+    session: Session, *, actor: User, license_id: uuid.UUID
+) -> OrganizationLicense:
+    auth_service.require_vendor(actor, write=True)
+    license_ = session.get(OrganizationLicense, license_id)
+    if license_ is None:
+        raise NotFoundError(f"License {license_id} not found.")
+    if license_.status == OrganizationLicenseStatus.REVOKED:
+        raise ConflictError("This license is already revoked.")
+    license_.status = OrganizationLicenseStatus.REVOKED
+    session.flush()
+    return license_
 
 
 def list_certificates_for_license(

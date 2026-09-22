@@ -300,3 +300,19 @@ table.data a:hover { text-decoration: underline; }
 }
 
 .logout-form { display: inline; }
+
+.modal[popover] {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    color: var(--text);
+    padding: 24px 28px;
+    max-width: 420px;
+    width: calc(100% - 32px);
+}
+
+.modal[popover]::backdrop {
+    background: rgba(2, 6, 23, 0.6);
+}
+
+.modal h2 { font-size: 1.05rem; margin: 0 0 10px; }

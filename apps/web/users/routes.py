@@ -82,14 +82,12 @@ def detail(user_id: uuid.UUID):
     user = load_current_user()
     target = users_service.get_user(db, actor=user, user_id=user_id)
     memberships = users_service.list_memberships_for_user(db, actor=user, user_id=user_id)
-    devices = users_service.list_devices_for_user(db, actor=user, user_id=user_id)
     can_write = auth_service.can_vendor_write(user)
     password_form = SetPasswordForm()
     return render_template(
         "users/detail.html",
         target=target,
         memberships=memberships,
-        devices=devices,
         can_write=can_write,
         password_form=password_form,
         vendor_roles=VendorRole,

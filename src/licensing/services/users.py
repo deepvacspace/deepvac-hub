@@ -14,7 +14,6 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from licensing.exceptions import ConflictError, NotFoundError
-from licensing.models.devices import DeviceActivation
 from licensing.models.enums import MembershipStatus, UserStatus, VendorRole
 from licensing.models.organizations import OrganizationMembership
 from licensing.models.users import User
@@ -150,18 +149,5 @@ def list_memberships_for_user(
                 OrganizationMembership.user_id == user_id,
                 OrganizationMembership.status == MembershipStatus.ACTIVE,
             )
-        ).scalars()
-    )
-
-
-def list_devices_for_user(
-    session: Session, *, actor: User, user_id: uuid.UUID
-) -> list[DeviceActivation]:
-    auth_service.require_vendor(actor)
-    return list(
-        session.execute(
-            select(DeviceActivation)
-            .where(DeviceActivation.user_id == user_id)
-            .order_by(DeviceActivation.created_at.desc())
         ).scalars()
     )

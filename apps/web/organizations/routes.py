@@ -43,8 +43,17 @@ def list_view():
     page_result = organizations_service.list_organizations(
         db, actor=user, q=q, status=status, page=page
     )
+    current_licenses = licenses_service.get_current_licenses_for_organizations(
+        db, actor=user, organization_ids=[org.id for org in page_result.items]
+    )
+    can_write = auth_service.can_vendor_write(user)
     return render_template(
-        "organizations/list.html", page_result=page_result, q=q or "", status=status_raw or ""
+        "organizations/list.html",
+        page_result=page_result,
+        q=q or "",
+        status=status_raw or "",
+        current_licenses=current_licenses,
+        can_write=can_write,
     )
 
 
@@ -90,9 +99,6 @@ def detail(organization_id: uuid.UUID):
     org_licenses = licenses_service.list_licenses_for_org(
         db, actor=user, organization_id=organization_id
     )
-    devices = organizations_service.list_devices_for_org(
-        db, actor=user, organization_id=organization_id
-    )
     chambers = chambers_service.list_for_organization(db, organization_id)
     alarm_rules = alarm_rules_service.list_for_organization(db, organization_id)
     test_profiles = test_profiles_service.list_for_organization(db, organization_id)
@@ -105,7 +111,6 @@ def detail(organization_id: uuid.UUID):
         org=org,
         memberships=memberships,
         org_licenses=org_licenses,
-        devices=devices,
         chambers=chambers,
         alarm_rules=alarm_rules,
         test_profiles=test_profiles,

@@ -102,13 +102,32 @@
         </div>
         {% if org_licenses %}
         <table class="data">
-            <thead><tr><th>Product / edition</th><th>Status</th><th>Expires</th></tr></thead>
+            <thead><tr><th>Product / edition</th><th>Status</th><th>Expires</th>{% if can_write %}<th></th>{% endif %}</tr></thead>
             <tbody>
             {% for license in org_licenses %}
                 <tr>
                     <td><a href="{{ url_for('licenses.detail', license_id=license.id) }}">{{ license.product.code }} / {{ license.edition.name }}</a></td>
                     <td><span class="badge status-{{ license.status.value }}">{{ license.status.value }}</span></td>
                     <td>{{ license.expires_at.strftime('%Y-%m-%d') }}</td>
+                    {% if can_write %}
+                    <td>
+                        {% if license.status.value != 'revoked' %}
+                        <button popovertarget="revoke-license-{{ license.id }}" class="btn btn-danger">Revoke</button>
+                        <div id="revoke-license-{{ license.id }}" popover class="modal">
+                            <h2>Revoke this license?</h2>
+                            <p class="muted">{{ org.name }} will lose access to this license. This cannot be undone.</p>
+                            <div class="button-row">
+                                <button popovertarget="revoke-license-{{ license.id }}" popovertargetaction="hide" class="btn btn-secondary">Cancel</button>
+                                <form method="post" action="{{ url_for('licenses.revoke', license_id=license.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="organization_id" value="{{ org.id }}">
+                                    <button type="submit" class="btn btn-danger">Revoke license</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endif %}
                 </tr>
             {% endfor %}
             </tbody>
@@ -119,23 +138,70 @@
     </div>
 
     <div class="section">
-        <h2>Devices</h2>
-        {% if devices %}
+        <h2>Chambers</h2>
+        <p class="muted">Synced from the organization's Insight desktop installations.</p>
+        {% if chambers %}
         <table class="data">
-            <thead><tr><th>Owner</th><th>Device</th><th>Status</th><th>Activated</th></tr></thead>
+            <thead><tr><th>Name</th><th>Host</th><th>Port</th><th>Added</th></tr></thead>
             <tbody>
-            {% for device in devices %}
+            {% for chamber in chambers %}
                 <tr>
-                    <td>{{ device.user.display_name }}</td>
-                    <td>{{ device.display_name or "—" }}</td>
-                    <td><span class="badge status-{{ device.status.value }}">{{ device.status.value }}</span></td>
-                    <td>{{ device.activated_at.strftime('%Y-%m-%d') if device.activated_at else "—" }}</td>
+                    <td>{{ chamber.name }}</td>
+                    <td>{{ chamber.host }}</td>
+                    <td>{{ chamber.port }}</td>
+                    <td>{{ chamber.created_at.strftime('%Y-%m-%d') }}</td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p class="empty-state">No devices activated yet.</p>
+        <p class="empty-state">No chambers registered yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Alarm rules</h2>
+        <p class="muted">Synced from the organization's Insight desktop installations.</p>
+        {% if alarm_rules %}
+        <table class="data">
+            <thead><tr><th>Name</th><th>Chamber</th><th>Variable</th><th>Threshold</th><th>Severity</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for rule in alarm_rules %}
+                <tr>
+                    <td>{{ rule.name }}</td>
+                    <td>{{ rule.chamber.name }}</td>
+                    <td>{{ rule.variable }}</td>
+                    <td>{{ rule.condition }} {{ rule.value }}{% if rule.value2 is not none %} – {{ rule.value2 }}{% endif %}</td>
+                    <td>{{ rule.severity }}</td>
+                    <td><span class="badge status-{{ 'active' if rule.enabled else 'disabled' }}">{{ 'enabled' if rule.enabled else 'disabled' }}</span></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No alarm rules configured yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Test profiles</h2>
+        <p class="muted">Synced from the organization's Insight desktop installations.</p>
+        {% if test_profiles %}
+        <table class="data">
+            <thead><tr><th>Name</th><th>Description</th><th>Steps</th><th>Last updated</th></tr></thead>
+            <tbody>
+            {% for profile in test_profiles %}
+                <tr>
+                    <td>{{ profile.name }}</td>
+                    <td>{{ profile.description or "—" }}</td>
+                    <td>{{ profile.steps | length }}</td>
+                    <td>{{ profile.updated_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No test profiles created yet.</p>
         {% endif %}
     </div>
 
