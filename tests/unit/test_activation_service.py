@@ -61,7 +61,7 @@ def test_complete_activation_succeeds_for_any_active_member_no_seat_needed(  # t
     signing_key_id, signing_private_key = _make_signing_key(db_session)
     _, device_public_key = generate_keypair()
 
-    envelope = activation_service.complete_activation(
+    license_envelope, account_envelope = activation_service.complete_activation(
         db_session,
         activation_id=request.id,
         device_public_key=public_key_to_raw_bytes(device_public_key),
@@ -71,7 +71,11 @@ def test_complete_activation_succeeds_for_any_active_member_no_seat_needed(  # t
         default_validity_days=365,
     )
 
-    assert envelope.payload["organization_id"] == str(org.id)
+    assert license_envelope.payload["organization_id"] == str(org.id)
+    assert account_envelope.payload["organization_id"] == str(org.id)
+    assert account_envelope.payload["user_id"] == str(member.id)
+    assert account_envelope.payload["email"] == member.email
+    assert account_envelope.payload["organization_name"] == org.name
 
 
 def test_approve_activation_rejects_non_member(db_session) -> None:  # type: ignore[no-untyped-def]

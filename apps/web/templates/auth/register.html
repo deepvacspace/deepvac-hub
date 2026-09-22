@@ -1,5 +1,5 @@
 {% extends "shared/base.html" %}
-{% block title %}Create your account — deepvac Licensing{% endblock %}
+{% block title %}Create your account — Deepvac Hub{% endblock %}
 {% block content %}
 <div class="card narrow">
     <h1>Create your account</h1>
@@ -19,6 +19,7 @@
         </label>
         <label>Password
             {{ form.password() }}
+            <span class="field-hint">At least 12 characters. Mix of letters, numbers, and symbols.</span>
             {% for e in form.password.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
         </label>
         <label>Confirm password

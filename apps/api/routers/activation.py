@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from apps.api.dependencies import SigningContext, get_db, get_signing_context
 from licensing.config import get_settings
 from licensing.exceptions import NotFoundError
+from licensing.schemas.account_link import ActivationCompleteResponse, SignedAccountInfo
 from licensing.schemas.activation import (
     ActivationCompleteRequest,
     ActivationStartRequest,
@@ -60,16 +61,16 @@ def get_activation_status(
     )
 
 
-@router.post("/activations/{activation_id}/complete", response_model=SignedLicenseEnvelope)
+@router.post("/activations/{activation_id}/complete", response_model=ActivationCompleteResponse)
 def complete_activation(
     activation_id: uuid.UUID,
     payload: ActivationCompleteRequest,
     db: Session = Depends(get_db),
     signing_ctx: SigningContext = Depends(get_signing_context),
-) -> SignedLicenseEnvelope:
+) -> ActivationCompleteResponse:
     settings = get_settings()
     device_public_key = activation_service.device_public_key_from_b64(payload.device_public_key)
-    envelope = activation_service.complete_activation(
+    license_envelope, account_envelope = activation_service.complete_activation(
         db,
         activation_id=activation_id,
         device_public_key=device_public_key,
@@ -78,4 +79,7 @@ def complete_activation(
         private_key=signing_ctx.private_key,
         default_validity_days=settings.default_license_validity_days,
     )
-    return SignedLicenseEnvelope(**envelope.to_dict())
+    return ActivationCompleteResponse(
+        license=SignedLicenseEnvelope(**license_envelope.to_dict()),
+        account=SignedAccountInfo(**account_envelope.to_dict()),
+    )

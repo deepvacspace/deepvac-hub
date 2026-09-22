@@ -1,5 +1,5 @@
 {% extends "shared/base.html" %}
-{% block title %}{{ target.display_name }} — deepvac Licensing{% endblock %}
+{% block title %}{{ target.display_name }} — Deepvac Hub{% endblock %}
 {% block content %}
 <div class="card wide">
     <h1>{{ target.display_name }} <span class="badge status-{{ target.status.value }}">{{ target.status.value }}</span></h1>
@@ -22,7 +22,7 @@
             {% for membership in memberships %}
                 <tr>
                     <td><a href="{{ url_for('organizations.detail', organization_id=membership.organization_id) }}">{{ membership.organization.name }}</a></td>
-                    <td>{{ membership.role.value }}</td>
+                    <td>{{ membership.role | membership_role_label }}</td>
                 </tr>
             {% endfor %}
             </tbody>

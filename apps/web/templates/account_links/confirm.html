@@ -1,0 +1,32 @@
+{% extends "shared/base.html" %}
+{% block title %}Link account — Deepvac Hub{% endblock %}
+{% block content %}
+<div class="card narrow">
+    <h1>Link your account</h1>
+
+    {% if approved %}
+        <p class="alert success">
+            Link approved. Return to the desktop app — it will finish linking
+            automatically within a few seconds.
+        </p>
+    {% else %}
+        <p class="muted">Code from the desktop app:</p>
+        <p class="user-code">{{ user_code or "—" }}</p>
+
+        {% if error %}<p class="alert">{{ error }}</p>{% endif %}
+
+        {% if organization %}
+        <p class="muted">
+            Approve linking this desktop installation to your account
+            (<strong>{{ user.email }}</strong>) under
+            <strong>{{ organization.name }}</strong>?
+        </p>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_code" value="{{ user_code }}">
+            <button type="submit" class="primary">Approve link</button>
+        </form>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

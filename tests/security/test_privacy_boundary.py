@@ -16,6 +16,7 @@ from sqlalchemy import inspect as sa_inspect
 import licensing.models  # noqa: F401
 from licensing.audit.allowlist import ALLOWED_METADATA_KEYS
 from licensing.database import Base
+from licensing.schemas.account_link import AccountInfo, SignedAccountInfo
 from licensing.schemas.license import LicensePayload, SignedLicenseEnvelope
 
 PROHIBITED_TERMS = [
@@ -56,7 +57,7 @@ def test_no_prohibited_fields_in_sqlalchemy_models() -> None:
 
 
 def test_no_prohibited_fields_in_license_schemas() -> None:
-    for schema in (LicensePayload, SignedLicenseEnvelope):
+    for schema in (LicensePayload, SignedLicenseEnvelope, AccountInfo, SignedAccountInfo):
         bad = _offending(set(schema.model_fields.keys()))
         assert not bad, f"{schema.__name__} has prohibited fields: {bad}"
 

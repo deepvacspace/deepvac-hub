@@ -9,15 +9,19 @@ from __future__ import annotations
 
 import logging
 import uuid
+from pathlib import Path
 
-from flask import Flask, g, request
+from flask import Flask, g, request, send_from_directory
 from sqlalchemy import select
 
+import licensing
 from apps.web.extensions import csrf
 from licensing.config import get_settings
 from licensing.database import get_scoped_session
 from licensing.models.enums import MembershipStatus
 from licensing.models.organizations import OrganizationMembership
+
+_RESOURCES_DIR = Path(licensing.__file__).resolve().parent / "resources"
 
 
 def create_app() -> Flask:
@@ -38,6 +42,16 @@ def create_app() -> Flask:
     logging.basicConfig(level=settings.log_level)
 
     csrf.init_app(app)
+
+    from apps.web.template_filters import (
+        membership_role_label,
+        user_organizations_label,
+        user_role_label,
+    )
+
+    app.jinja_env.filters["membership_role_label"] = membership_role_label
+    app.jinja_env.filters["user_role_label"] = user_role_label
+    app.jinja_env.filters["user_organizations_label"] = user_organizations_label
 
     if settings.trusted_proxy_count > 0:
         from werkzeug.middleware.proxy_fix import ProxyFix
@@ -65,10 +79,15 @@ def create_app() -> Flask:
     def _remove_session(exception: BaseException | None) -> None:
         get_scoped_session().remove()
 
+    @app.get("/favicon.ico")
+    def favicon():
+        return send_from_directory(_RESOURCES_DIR, "icon.png", mimetype="image/png")
+
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
         return {"status": "ok"}
 
+    from apps.web.account_links import bp as account_links_bp
     from apps.web.activate import bp as activate_bp
     from apps.web.auth import bp as auth_bp
     from apps.web.auth.session import load_current_user
@@ -80,6 +99,7 @@ def create_app() -> Flask:
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(activate_bp)
+    app.register_blueprint(account_links_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(organizations_bp)
     app.register_blueprint(users_bp)

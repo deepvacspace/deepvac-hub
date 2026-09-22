@@ -46,6 +46,15 @@ hub/
 | GET | `/activations/{id}` | none | poll status; does not leak unrelated org/user existence |
 | POST | `/activations/{id}/complete` | activation must be `approved` | submit device public key, receive signed license |
 | GET | `/licensing/public-keys` | none | active + still-needed retired public keys |
+| GET | `/test-profiles` | device signature | list the calling device's organization's test profiles |
+| POST | `/test-profiles` | device signature | create a test profile in the calling device's organization |
+| POST | `/test-profiles/{id}/replace` | device signature | overwrite a test profile's name/description/steps |
+| GET | `/chambers` | device signature | list the calling device's organization's chamber registry |
+| POST | `/chambers` | device signature | create a chamber in the calling device's organization |
+| POST | `/chambers/{id}/replace` | device signature | overwrite a chamber's name/host/port |
+| GET | `/alarm-rules` | device signature | list the calling device's organization's alarm rules |
+| POST | `/alarm-rules` | device signature | create an alarm rule for a chamber in the calling device's organization |
+| POST | `/alarm-rules/{id}/replace` | device signature | overwrite an alarm rule's thresholds |
 
 ## Flask management-portal page map
 
@@ -154,9 +163,15 @@ docker compose run --rm tools python scripts/seed_development.py --key-id dev-ke
 ```
 
 This seeds a demo org (`demo-org`) with an active `deepvac-insight`
-professional license (every active member entitled, no seat limit) and a
-portal login: `demo@example.com` / `DemoPass123!` at
-`http://localhost:8080/login`. Run the sibling `insight` app
+professional license (every active member entitled, no seat limit) and two
+portal logins at `http://localhost:8080/login`:
+
+| Email | Password | Role |
+|---|---|---|
+| `demo@example.com` | `DemoPass123!` | `organization_admin` of `demo-org` |
+| `admin-demo@example.com` | `AdminDemoPass123!` | `vendor_super_admin` (global — full access to every organization, no membership needed) |
+
+Run the sibling `insight` app
 (`python main.py` there) — its **Activate this installation** window opens
 `http://localhost:8080/activate?user_code=...`; sign in with the demo login
 and approve. The desktop app finishes activation automatically and caches a

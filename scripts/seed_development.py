@@ -31,6 +31,7 @@ from licensing.models.enums import (  # noqa: E402
     ProductStatus,
     SigningKeyStatus,
     UserStatus,
+    VendorRole,
 )
 from licensing.models.licenses import OrganizationLicense  # noqa: E402
 from licensing.models.organizations import Organization, OrganizationMembership  # noqa: E402
@@ -42,6 +43,9 @@ DEMO_USER_EMAIL = "demo@example.com"
 DEMO_USER_PASSWORD = "DemoPass123!"
 DEMO_ORG_SLUG = "demo-org"
 DEMO_EDITION_CODE = "professional"
+
+ADMIN_DEMO_EMAIL = "admin-demo@example.com"
+ADMIN_DEMO_PASSWORD = "AdminDemoPass123!"
 
 PRODUCT_CODE = "deepvac-insight"
 
@@ -226,6 +230,26 @@ def seed_demo_organization(session) -> None:  # type: ignore[no-untyped-def]
     )
 
 
+def seed_vendor_admin(session) -> None:  # type: ignore[no-untyped-def]
+    """Creates a vendor_super_admin portal login for exercising vendor-only
+    screens locally."""
+    now = datetime.now(UTC)
+    user = session.query(User).filter(User.normalized_email == ADMIN_DEMO_EMAIL).one_or_none()
+    if user is None:
+        user = User(
+            email=ADMIN_DEMO_EMAIL,
+            normalized_email=ADMIN_DEMO_EMAIL,
+            password_hash=hash_password(ADMIN_DEMO_PASSWORD),
+            display_name="Admin Demo",
+            status=UserStatus.ACTIVE,
+            vendor_role=VendorRole.VENDOR_SUPER_ADMIN,
+            email_verified_at=now,
+        )
+        session.add(user)
+        session.flush()
+    print(f"Seeded vendor_super_admin portal login: {ADMIN_DEMO_EMAIL} / {ADMIN_DEMO_PASSWORD}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--key-id", default=None)
@@ -236,6 +260,7 @@ def main() -> None:
         seed_catalog(session)
         seed_signing_key(session, args.key_id, args.public_key_file)
         seed_demo_organization(session)
+        seed_vendor_admin(session)
 
 
 if __name__ == "__main__":

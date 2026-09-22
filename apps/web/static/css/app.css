@@ -93,7 +93,8 @@ body {
 }
 
 .toolbar form { display: flex; gap: 8px; margin: 0; }
-.toolbar input { margin-top: 0; width: 240px; }
+.toolbar input { margin-top: 0; width: 320px; }
+.toolbar select { margin-top: 0; width: 160px; }
 .toolbar label { margin-bottom: 0; }
 
 .button-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
@@ -101,6 +102,13 @@ body {
 .field-error {
     display: block;
     color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.field-hint {
+    display: block;
+    color: var(--muted);
     font-size: 0.8rem;
     margin-top: 4px;
 }

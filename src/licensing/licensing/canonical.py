@@ -1,4 +1,4 @@
-"""Canonical serialization for signed license payloads.
+"""Canonical serialization for signed payloads.
 
 See docs/license-format.md. The rule: sorted keys, no insignificant
 whitespace, UTF-8 bytes, no trailing newline. This is the ONLY function
@@ -34,22 +34,35 @@ REQUIRED_PAYLOAD_KEYS = frozenset(
     }
 )
 
+# The exact, exhaustive set of keys an AccountInfo payload may contain.
+ACCOUNT_INFO_REQUIRED_KEYS = frozenset(
+    {
+        "schema_version",
+        "user_id",
+        "email",
+        "display_name",
+        "organization_id",
+        "organization_name",
+    }
+)
 
-def canonicalize(payload: dict[str, Any]) -> bytes:
+
+def canonicalize(
+    payload: dict[str, Any], *, required_keys: frozenset[str] = REQUIRED_PAYLOAD_KEYS
+) -> bytes:
     """Return the exact byte sequence that must be signed/verified for a
-    license payload.
+    payload of the given shape.
 
     Raises ValueError if the payload's keys don't exactly match
-    REQUIRED_PAYLOAD_KEYS — a deliberately strict guard against
-    accidentally signing (or accepting as valid) a payload with extra or
-    missing fields.
+    required_keys — a deliberately strict guard against accidentally
+    signing (or accepting as valid) a payload with extra or missing fields.
     """
     payload_keys = frozenset(payload.keys())
-    if payload_keys != REQUIRED_PAYLOAD_KEYS:
-        missing = REQUIRED_PAYLOAD_KEYS - payload_keys
-        extra = payload_keys - REQUIRED_PAYLOAD_KEYS
+    if payload_keys != required_keys:
+        missing = required_keys - payload_keys
+        extra = payload_keys - required_keys
         raise ValueError(
-            f"License payload has invalid shape (missing={sorted(missing)}, "
+            f"Payload has invalid shape (missing={sorted(missing)}, "
             f"extra={sorted(extra)})"
         )
     canonical_json = json.dumps(

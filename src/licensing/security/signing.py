@@ -26,7 +26,7 @@ from cryptography.hazmat.primitives.serialization import (
 )
 
 from licensing.exceptions import InvalidSignatureError
-from licensing.licensing.canonical import canonicalize
+from licensing.licensing.canonical import REQUIRED_PAYLOAD_KEYS, canonicalize
 
 ALGORITHM = "ed25519"
 
@@ -77,9 +77,13 @@ class SignedEnvelope:
 
 
 def sign_payload(
-    payload: dict[str, Any], private_key: Ed25519PrivateKey, key_id: str
+    payload: dict[str, Any],
+    private_key: Ed25519PrivateKey,
+    key_id: str,
+    *,
+    required_keys: frozenset[str] = REQUIRED_PAYLOAD_KEYS,
 ) -> SignedEnvelope:
-    canonical_bytes = canonicalize(payload)
+    canonical_bytes = canonicalize(payload, required_keys=required_keys)
     signature = private_key.sign(canonical_bytes)
     return SignedEnvelope(
         envelope_version=1,
@@ -89,7 +93,12 @@ def sign_payload(
     )
 
 
-def verify_envelope(envelope: dict[str, Any], public_key: Ed25519PublicKey) -> dict[str, Any]:
+def verify_envelope(
+    envelope: dict[str, Any],
+    public_key: Ed25519PublicKey,
+    *,
+    required_keys: frozenset[str] = REQUIRED_PAYLOAD_KEYS,
+) -> dict[str, Any]:
     """Verify a signed envelope's signature over its canonical payload bytes.
 
     Returns the payload dict on success. Raises InvalidSignatureError on any
@@ -97,7 +106,7 @@ def verify_envelope(envelope: dict[str, Any], public_key: Ed25519PublicKey) -> d
     check expiry/not_before — that is the caller's responsibility, since
     "now" is a policy concern, not a signature-verification concern.
     """
-    canonical_bytes = canonicalize(envelope["payload"])
+    canonical_bytes = canonicalize(envelope["payload"], required_keys=required_keys)
     signature = base64.urlsafe_b64decode(envelope["signature"])
     try:
         public_key.verify(signature, canonical_bytes)
