@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from licensing.exceptions import NotFoundError
 from licensing.models.alarm_rules import AlarmRule
@@ -16,6 +16,7 @@ def list_for_organization(session: Session, organization_id: uuid.UUID) -> list[
     rows = session.execute(
         select(AlarmRule)
         .where(AlarmRule.organization_id == organization_id)
+        .options(selectinload(AlarmRule.chamber))
         .order_by(AlarmRule.name)
     ).scalars()
     return list(rows)

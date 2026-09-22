@@ -163,7 +163,7 @@ docker compose run --rm tools python scripts/seed_development.py --key-id dev-ke
 ```
 
 This seeds a demo org (`demo-org`) with an active `deepvac-insight`
-professional license (every active member entitled, no seat limit) and two
+standard license (every active member entitled, no seat limit) and two
 portal logins at `http://localhost:8080/login`:
 
 | Email | Password | Role |
