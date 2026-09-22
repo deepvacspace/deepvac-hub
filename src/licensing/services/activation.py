@@ -36,6 +36,7 @@ from licensing.models.products import Edition, Product
 from licensing.models.users import User
 from licensing.security.signing import SignedEnvelope
 from licensing.security.tokens import generate_user_code, hash_lookup_token
+from licensing.services import account_links as account_links_service
 from licensing.services import devices as devices_service
 from licensing.services import issuance as issuance_service
 
@@ -149,7 +150,9 @@ def complete_activation(
     signing_key_id: str,
     private_key: Ed25519PrivateKey,
     default_validity_days: int,
-) -> SignedEnvelope:
+) -> tuple[SignedEnvelope, SignedEnvelope]:
+    """Completes activation, returning the signed license envelope and a
+    signed AccountInfo envelope for the approving user/organization."""
     request = session.execute(
         select(ActivationRequest).where(ActivationRequest.id == activation_id).with_for_update()
     ).scalar_one_or_none()
@@ -212,7 +215,7 @@ def complete_activation(
         display_name=display_name,
     )
 
-    envelope = issuance_service.issue_certificate(
+    license_envelope = issuance_service.issue_certificate(
         session,
         device_activation=device,
         user_id=user.id,
@@ -223,11 +226,18 @@ def complete_activation(
         private_key=private_key,
         validity_days=org_license.offline_validity_days or default_validity_days,
     )
+    account_envelope = account_links_service.build_and_sign_account_info(
+        session,
+        user=user,
+        organization_id=request.approved_organization_id,
+        signing_key_id=signing_key_id,
+        private_key=private_key,
+    )
 
     request.status = ActivationRequestStatus.CONSUMED
     request.consumed_at = now
     session.flush()
-    return envelope
+    return license_envelope, account_envelope
 
 
 def device_public_key_from_b64(value: str) -> bytes:

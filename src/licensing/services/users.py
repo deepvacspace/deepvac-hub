@@ -11,7 +11,7 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from licensing.exceptions import ConflictError, NotFoundError
 from licensing.models.devices import DeviceActivation
@@ -88,7 +88,11 @@ def list_users(
     per_page: int = 25,
 ) -> Page[User]:
     auth_service.require_vendor(actor)
-    stmt = select(User).order_by(User.display_name)
+    stmt = (
+        select(User)
+        .options(selectinload(User.memberships).selectinload(OrganizationMembership.organization))
+        .order_by(User.display_name)
+    )
     if q:
         like = f"%{q}%"
         stmt = stmt.where(or_(User.display_name.ilike(like), User.normalized_email.ilike(like)))

@@ -33,7 +33,7 @@ def login():
             error = "This account is disabled."
         else:
             login_user(user.id)
-            next_url = request.args.get("next") or url_for("activate.confirm")
+            next_url = request.args.get("next") or url_for("index")
             return redirect(next_url)
     return render_template("auth/login.html", form=form, error=error)
 

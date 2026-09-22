@@ -1,5 +1,5 @@
 {% extends "shared/base.html" %}
-{% block title %}Users — deepvac Licensing{% endblock %}
+{% block title %}Users — Deepvac Hub{% endblock %}
 {% block content %}
 <div class="card wide">
     <div class="toolbar">
@@ -18,13 +18,14 @@
     </form>
     {% if page_result.items %}
     <table class="data">
-        <thead><tr><th>Name</th><th>Email</th><th>Vendor role</th><th>Status</th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Status</th></tr></thead>
         <tbody>
         {% for u in page_result.items %}
             <tr>
                 <td><a href="{{ url_for('users.detail', user_id=u.id) }}">{{ u.display_name }}</a></td>
                 <td>{{ u.email }}</td>
-                <td>{{ u.vendor_role.value if u.vendor_role else "—" }}</td>
+                <td>{{ u | user_organizations_label }}</td>
+                <td>{{ u | user_role_label }}</td>
                 <td><span class="badge status-{{ u.status.value }}">{{ u.status.value }}</span></td>
             </tr>
         {% endfor %}

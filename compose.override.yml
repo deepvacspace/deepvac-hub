@@ -1,0 +1,14 @@
+# Local dev convenience: adds live code mounts and reload/debug servers on
+# top of compose.yaml.
+services:
+  api:
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./src:/app/src
+    command: ["uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+
+  web:
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./src:/app/src
+    command: ["flask", "--app", "apps.web.app:app", "run", "--host", "0.0.0.0", "--port", "8002", "--debug"]

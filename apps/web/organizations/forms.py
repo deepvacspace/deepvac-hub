@@ -24,7 +24,7 @@ class AddMembershipForm(FlaskForm):
     role = SelectField(
         "Role",
         choices=[
-            ("organization_admin", "Organization admin"),
+            ("organization_admin", "Administrator"),
             ("organization_member", "Member"),
         ],
     )

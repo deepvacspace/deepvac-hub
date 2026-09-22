@@ -25,6 +25,15 @@ def public_key_hash(device_public_key: bytes) -> str:
     return base64.urlsafe_b64encode(hashlib.sha256(device_public_key).digest()).decode("ascii")
 
 
+def get_active_by_public_key_hash(session: Session, key_hash: str) -> DeviceActivation | None:
+    device = session.execute(
+        select(DeviceActivation).where(DeviceActivation.device_public_key_hash == key_hash)
+    ).scalar_one_or_none()
+    if device is None or device.status != DeviceActivationStatus.ACTIVE:
+        return None
+    return device
+
+
 def register_device(
     session: Session,
     *,

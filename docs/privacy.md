@@ -51,6 +51,12 @@ if any field name matches a prohibited-term list (`experiment`, `filename`,
 fails if any new column/field is added to `audit_events.metadata` beyond the
 allow-list.
 
+**Exception: test profiles.** Test profiles (`test_profiles`/`test_profile_steps`)
+are a reusable schedule template, not experiment data: they carry no
+measurements, results, files, annotations, or customer project information.
+They are stored organization-scoped like every other resource in this
+service.
+
 ## Logging constraints
 
 * Full request/response bodies are never logged for: authentication
