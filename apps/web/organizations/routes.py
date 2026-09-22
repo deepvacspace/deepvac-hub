@@ -10,9 +10,12 @@ from apps.web.organizations.forms import AddMembershipForm, OrganizationForm
 from licensing.database import get_scoped_session
 from licensing.exceptions import ConflictError, LicensingError, NotFoundError
 from licensing.models.enums import MembershipRole, OrganizationStatus
+from licensing.services import alarm_rules as alarm_rules_service
 from licensing.services import auth as auth_service
+from licensing.services import chambers as chambers_service
 from licensing.services import licenses as licenses_service
 from licensing.services import organizations as organizations_service
+from licensing.services import test_profiles as test_profiles_service
 
 bp = Blueprint("organizations", __name__, url_prefix="/organizations")
 
@@ -90,6 +93,9 @@ def detail(organization_id: uuid.UUID):
     devices = organizations_service.list_devices_for_org(
         db, actor=user, organization_id=organization_id
     )
+    chambers = chambers_service.list_for_organization(db, organization_id)
+    alarm_rules = alarm_rules_service.list_for_organization(db, organization_id)
+    test_profiles = test_profiles_service.list_for_organization(db, organization_id)
     can_write = auth_service.can_vendor_write(user)
     can_admin = auth_service.can_org_admin(db, user, organization_id)
     edit_form = OrganizationForm(name=org.name, slug=org.slug)
@@ -100,6 +106,9 @@ def detail(organization_id: uuid.UUID):
         memberships=memberships,
         org_licenses=org_licenses,
         devices=devices,
+        chambers=chambers,
+        alarm_rules=alarm_rules,
+        test_profiles=test_profiles,
         can_write=can_write,
         can_admin=can_admin,
         edit_form=edit_form,

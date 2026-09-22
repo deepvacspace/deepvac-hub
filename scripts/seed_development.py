@@ -42,25 +42,22 @@ from licensing.security.passwords import hash_password  # noqa: E402
 DEMO_USER_EMAIL = "demo@example.com"
 DEMO_USER_PASSWORD = "DemoPass123!"
 DEMO_ORG_SLUG = "demo-org"
-DEMO_EDITION_CODE = "professional"
+DEMO_EDITION_CODE = "standard"
+
+ADMIN_DEMO_EMAIL = "admin-demo@example.com"
+ADMIN_DEMO_PASSWORD = "AdminDemoPass123!"
 
 ADMIN_DEMO_EMAIL = "admin-demo@example.com"
 ADMIN_DEMO_PASSWORD = "AdminDemoPass123!"
 
 PRODUCT_CODE = "deepvac-insight"
 
-EDITIONS = ["standard", "professional", "enterprise"]
+EDITIONS = ["standard"]
 
 FEATURES = {
     "collaboration": "Real-time experiment collaboration",
     "annotations": "Experiment annotations",
     "reports": "Automated report generation",
-}
-
-EDITION_FEATURES = {
-    "standard": [],
-    "professional": ["collaboration", "annotations", "reports"],
-    "enterprise": ["collaboration", "annotations", "reports"],
 }
 
 
@@ -104,8 +101,7 @@ def seed_catalog(session) -> None:  # type: ignore[no-untyped-def]
     }
     for edition_code in EDITIONS:
         edition = _get_or_create_edition(session, product, edition_code)
-        for feature_code in EDITION_FEATURES[edition_code]:
-            feature = features[feature_code]
+        for feature in features.values():
             exists = (
                 session.query(EditionFeature)
                 .filter(
@@ -145,10 +141,10 @@ def seed_signing_key(session, key_id: str | None, public_key_file: str | None) -
 
 
 def seed_demo_organization(session) -> None:  # type: ignore[no-untyped-def]
-    """Creates a demo user + organization + active professional license,
-    so the desktop app's activation flow has something real to activate
-    against without any manual DB setup. Any active member of the org can
-    activate -- there is no separate seat-assignment step.
+    """Creates a demo user + organization + active license, so the desktop
+    app's activation flow has something real to activate against without
+    any manual DB setup. Any active member of the org can activate -- there
+    is no separate seat-assignment step.
     """
     now = datetime.now(UTC)
 
@@ -224,8 +220,7 @@ def seed_demo_organization(session) -> None:  # type: ignore[no-untyped-def]
 
     print(
         f"Seeded demo organization {DEMO_ORG_SLUG!r} with an active "
-        f"{DEMO_EDITION_CODE} license for {PRODUCT_CODE!r} (no seat limit -- "
-        "any active member of the org can activate).\n"
+        f"{DEMO_EDITION_CODE} license for {PRODUCT_CODE!r}.\n"
         f"Demo portal login: {DEMO_USER_EMAIL} / {DEMO_USER_PASSWORD}"
     )
 

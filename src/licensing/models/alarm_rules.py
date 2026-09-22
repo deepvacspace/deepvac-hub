@@ -4,9 +4,10 @@ import uuid
 
 from sqlalchemy import Boolean, Float, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from licensing.database import Base
+from licensing.models.chambers import Chamber
 from licensing.models.mixins import TimestampMixin, UUIDPrimaryKeyMixin
 
 
@@ -33,6 +34,8 @@ class AlarmRule(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
+
+    chamber: Mapped[Chamber] = relationship()
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<AlarmRule {self.id} chamber={self.chamber_id} {self.name!r}>"

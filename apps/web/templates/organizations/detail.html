@@ -138,5 +138,73 @@
         <p class="empty-state">No devices activated yet.</p>
         {% endif %}
     </div>
+
+    <div class="section">
+        <h2>Chambers</h2>
+        <p class="muted">Synced from the organization's Insight desktop installations.</p>
+        {% if chambers %}
+        <table class="data">
+            <thead><tr><th>Name</th><th>Host</th><th>Port</th><th>Added</th></tr></thead>
+            <tbody>
+            {% for chamber in chambers %}
+                <tr>
+                    <td>{{ chamber.name }}</td>
+                    <td>{{ chamber.host }}</td>
+                    <td>{{ chamber.port }}</td>
+                    <td>{{ chamber.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No chambers registered yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Alarm rules</h2>
+        <p class="muted">Synced from the organization's Insight desktop installations.</p>
+        {% if alarm_rules %}
+        <table class="data">
+            <thead><tr><th>Name</th><th>Chamber</th><th>Variable</th><th>Threshold</th><th>Severity</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for rule in alarm_rules %}
+                <tr>
+                    <td>{{ rule.name }}</td>
+                    <td>{{ rule.chamber.name }}</td>
+                    <td>{{ rule.variable }}</td>
+                    <td>{{ rule.condition }} {{ rule.value }}{% if rule.value2 is not none %} – {{ rule.value2 }}{% endif %}</td>
+                    <td>{{ rule.severity }}</td>
+                    <td><span class="badge status-{{ 'active' if rule.enabled else 'disabled' }}">{{ 'enabled' if rule.enabled else 'disabled' }}</span></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No alarm rules configured yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Test profiles</h2>
+        <p class="muted">Synced from the organization's Insight desktop installations.</p>
+        {% if test_profiles %}
+        <table class="data">
+            <thead><tr><th>Name</th><th>Description</th><th>Steps</th><th>Last updated</th></tr></thead>
+            <tbody>
+            {% for profile in test_profiles %}
+                <tr>
+                    <td>{{ profile.name }}</td>
+                    <td>{{ profile.description or "—" }}</td>
+                    <td>{{ profile.steps | length }}</td>
+                    <td>{{ profile.updated_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No test profiles created yet.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
