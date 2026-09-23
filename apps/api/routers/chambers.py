@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from apps.api.audit import log_event
 from apps.api.dependencies import DeviceContext, get_db, get_device_context
 from licensing.schemas.chambers import ChamberIn, ChamberListResponse, ChamberOut
 from licensing.services import chambers as chambers_service
@@ -26,6 +27,7 @@ def list_chambers(
 @router.post("/chambers", response_model=ChamberOut, status_code=201)
 def create_chamber(
     payload: ChamberIn,
+    request: Request,
     db: Session = Depends(get_db),
     device: DeviceContext = Depends(get_device_context),
 ) -> ChamberOut:
@@ -37,6 +39,14 @@ def create_chamber(
         port=payload.port,
         created_by_user_id=None,
     )
+    log_event(
+        request,
+        db,
+        event_type="chamber_created",
+        organization_id=device.organization_id,
+        target_type="chamber",
+        target_id=str(chamber.id),
+    )
     return ChamberOut.model_validate(chamber)
 
 
@@ -44,6 +54,7 @@ def create_chamber(
 def replace_chamber(
     chamber_id: uuid.UUID,
     payload: ChamberIn,
+    request: Request,
     db: Session = Depends(get_db),
     device: DeviceContext = Depends(get_device_context),
 ) -> ChamberOut:
@@ -54,5 +65,13 @@ def replace_chamber(
         name=payload.name,
         host=payload.host,
         port=payload.port,
+    )
+    log_event(
+        request,
+        db,
+        event_type="chamber_updated",
+        organization_id=device.organization_id,
+        target_type="chamber",
+        target_id=str(chamber.id),
     )
     return ChamberOut.model_validate(chamber)

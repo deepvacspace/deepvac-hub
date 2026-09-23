@@ -1,0 +1,49 @@
+{% extends "shared/base.html" %}
+{% block title %}{{ org.name }} notifications — Deepvac Hub{% endblock %}
+{% block content %}
+<div class="card wide">
+    <div class="toolbar">
+        <h1>{{ org.name }} — Notifications</h1>
+        <a href="{{ url_for('organizations.detail', organization_id=org.id) }}" class="btn btn-secondary">Back to organization</a>
+    </div>
+    <p class="muted">Chamber and alarm-rule activity synced from this organization's Insight desktop installations.</p>
+    {% if page_result.items %}
+    <table class="data">
+        <thead><tr><th>When</th><th>Event</th><th>Actor</th><th>Target</th></tr></thead>
+        <tbody>
+        {% for event in page_result.items %}
+            <tr>
+                <td>{{ event.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ event.event_type }}</td>
+                <td>
+                    {% if event.actor %}
+                    {{ event.actor.display_name }}
+                    {% else %}
+                    <span class="muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="muted">{{ event.target_type or "—" }}{% if event.target_id %} {{ event.target_id }}{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if page_result.pages > 1 %}
+    <div class="pagination">
+        {% if page_result.has_prev %}
+        <a href="{{ url_for('organizations.notifications', organization_id=org.id, page=page_result.page - 1) }}">&larr; Prev</a>
+        {% else %}
+        <span class="disabled">&larr; Prev</span>
+        {% endif %}
+        <span>Page {{ page_result.page }} of {{ page_result.pages }}</span>
+        {% if page_result.has_next %}
+        <a href="{{ url_for('organizations.notifications', organization_id=org.id, page=page_result.page + 1) }}">Next &rarr;</a>
+        {% else %}
+        <span class="disabled">Next &rarr;</span>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="empty-state">No chamber activity yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -5,9 +5,10 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from apps.api.audit import log_event
 from apps.api.dependencies import SigningContext, get_db, get_signing_context
 from licensing.config import get_settings
 from licensing.exceptions import NotFoundError
@@ -58,6 +59,7 @@ def get_link_status(link_id: uuid.UUID, db: Session = Depends(get_db)) -> Accoun
 @router.post("/account-links/{link_id}/complete", response_model=SignedAccountInfo)
 def complete_link(
     link_id: uuid.UUID,
+    request: Request,
     db: Session = Depends(get_db),
     signing_ctx: SigningContext = Depends(get_signing_context),
 ) -> SignedAccountInfo:
@@ -66,5 +68,14 @@ def complete_link(
         link_id=link_id,
         signing_key_id=signing_ctx.key_id,
         private_key=signing_ctx.private_key,
+    )
+    log_event(
+        request,
+        db,
+        event_type="account_link_completed",
+        actor_user_id=uuid.UUID(envelope.payload["user_id"]),
+        organization_id=uuid.UUID(envelope.payload["organization_id"]),
+        target_type="account_link_request",
+        target_id=str(link_id),
     )
     return SignedAccountInfo(**envelope.to_dict())

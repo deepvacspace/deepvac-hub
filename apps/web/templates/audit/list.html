@@ -1,0 +1,63 @@
+{% extends "shared/base.html" %}
+{% block title %}Audit log — Deepvac Hub{% endblock %}
+{% block content %}
+<div class="card wide">
+    <div class="toolbar">
+        <h1>Audit log</h1>
+    </div>
+    <form method="get" class="toolbar">
+        <select name="event_type">
+            <option value="" {% if not event_type %}selected{% endif %}>Any event type</option>
+            {% for et in event_types %}
+            <option value="{{ et }}" {% if event_type == et %}selected{% endif %}>{{ et }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-secondary">Filter</button>
+    </form>
+    {% if page_result.items %}
+    <table class="data">
+        <thead><tr><th>When</th><th>Event</th><th>Actor</th><th>Organization</th><th>Target</th></tr></thead>
+        <tbody>
+        {% for event in page_result.items %}
+            <tr>
+                <td>{{ event.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ event.event_type }}</td>
+                <td>
+                    {% if event.actor %}
+                    <a href="{{ url_for('users.detail', user_id=event.actor.id) }}">{{ event.actor.display_name }}</a>
+                    {% else %}
+                    <span class="muted">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if event.organization %}
+                    <a href="{{ url_for('organizations.detail', organization_id=event.organization.id) }}">{{ event.organization.name }}</a>
+                    {% else %}
+                    <span class="muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="muted">{{ event.target_type or "—" }}{% if event.target_id %} {{ event.target_id }}{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if page_result.pages > 1 %}
+    <div class="pagination">
+        {% if page_result.has_prev %}
+        <a href="{{ url_for('audit.index', page=page_result.page - 1, event_type=event_type) }}">&larr; Prev</a>
+        {% else %}
+        <span class="disabled">&larr; Prev</span>
+        {% endif %}
+        <span>Page {{ page_result.page }} of {{ page_result.pages }}</span>
+        {% if page_result.has_next %}
+        <a href="{{ url_for('audit.index', page=page_result.page + 1, event_type=event_type) }}">Next &rarr;</a>
+        {% else %}
+        <span class="disabled">Next &rarr;</span>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="empty-state">No audit events found.</p>
+    {% endif %}
+</div>
+{% endblock %}

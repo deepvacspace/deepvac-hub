@@ -17,6 +17,7 @@
                 <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
                 <a href="{{ url_for('organizations.list_view') }}">Organizations</a>
                 <a href="{{ url_for('users.list_view') }}">Users</a>
+                <a href="{{ url_for('audit.index') }}">Audit log</a>
                 {% endif %}
                 {% for membership in nav_memberships %}
                 <a href="{{ url_for('organizations.detail', organization_id=membership.organization_id) }}">{{ membership.organization.name }}</a>

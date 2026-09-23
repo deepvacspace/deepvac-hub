@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from apps.api.audit import log_event
 from apps.api.dependencies import DeviceContext, get_db, get_device_context
 from licensing.schemas.test_profiles import (
     TestProfileIn,
@@ -30,6 +31,7 @@ def list_test_profiles(
 @router.post("/test-profiles", response_model=TestProfileOut, status_code=201)
 def create_test_profile(
     payload: TestProfileIn,
+    request: Request,
     db: Session = Depends(get_db),
     device: DeviceContext = Depends(get_device_context),
 ) -> TestProfileOut:
@@ -41,6 +43,14 @@ def create_test_profile(
         steps=[step.model_dump() for step in payload.steps],
         created_by_user_id=None,
     )
+    log_event(
+        request,
+        db,
+        event_type="test_profile_created",
+        organization_id=device.organization_id,
+        target_type="test_profile",
+        target_id=str(profile.id),
+    )
     return TestProfileOut.model_validate(profile)
 
 
@@ -48,6 +58,7 @@ def create_test_profile(
 def replace_test_profile(
     profile_id: uuid.UUID,
     payload: TestProfileIn,
+    request: Request,
     db: Session = Depends(get_db),
     device: DeviceContext = Depends(get_device_context),
 ) -> TestProfileOut:
@@ -58,5 +69,13 @@ def replace_test_profile(
         name=payload.name,
         description=payload.description,
         steps=[step.model_dump() for step in payload.steps],
+    )
+    log_event(
+        request,
+        db,
+        event_type="test_profile_updated",
+        organization_id=device.organization_id,
+        target_type="test_profile",
+        target_id=str(profile.id),
     )
     return TestProfileOut.model_validate(profile)

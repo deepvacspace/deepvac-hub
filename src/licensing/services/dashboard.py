@@ -1,5 +1,5 @@
-"""Vendor-console summary counts. No audit-derived widgets here on purpose
--- the filterable /audit page is Phase F's job, not this dashboard's.
+"""Vendor-console summary counts. See services/audit.py for the filterable
+audit trail.
 """
 
 from __future__ import annotations

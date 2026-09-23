@@ -6,10 +6,12 @@ from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from licensing.database import Base
 from licensing.models.mixins import UUIDPrimaryKeyMixin
+from licensing.models.organizations import Organization
+from licensing.models.users import User
 
 
 class AuditEvent(UUIDPrimaryKeyMixin, Base):
@@ -42,6 +44,9 @@ class AuditEvent(UUIDPrimaryKeyMixin, Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
+
+    actor: Mapped[User | None] = relationship()
+    organization: Mapped[Organization | None] = relationship()
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<AuditEvent {self.id} {self.event_type}>"
