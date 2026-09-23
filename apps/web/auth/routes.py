@@ -3,7 +3,7 @@ from __future__ import annotations
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from apps.web.audit import log_event
-from apps.web.auth.forms import ChangePasswordForm, LoginForm, RegistrationForm
+from apps.web.auth.forms import ChangePasswordForm, DeleteAccountForm, LoginForm, RegistrationForm
 from apps.web.auth.session import load_current_user, login_required, login_user, logout_user
 from licensing.database import get_scoped_session
 from licensing.exceptions import LicensingError
@@ -14,6 +14,12 @@ from licensing.services import registration as registration_service
 from licensing.services import users as users_service
 
 bp = Blueprint("auth", __name__)
+
+
+def _flash_form_errors(form) -> None:  # type: ignore[no-untyped-def]
+    for field_errors in form.errors.values():
+        for error in field_errors:
+            flash(error, "error")
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -99,4 +105,36 @@ def account_password():
         except LicensingError as exc:
             db.rollback()
             flash(str(exc), "error")
-    return render_template("auth/account_password.html", form=form)
+    delete_form = DeleteAccountForm()
+    return render_template("auth/account_password.html", form=form, delete_form=delete_form)
+
+
+@bp.route("/account/delete", methods=["POST"])
+@login_required
+def delete_account():
+    db = get_scoped_session()
+    user = load_current_user()
+    form = DeleteAccountForm()
+    if form.validate_on_submit():
+        try:
+            user_id = user.id
+            users_service.delete_own_account(
+                db, user=user, current_password=form.current_password.data
+            )
+            log_event(
+                db,
+                event_type="account_self_deleted",
+                actor_user_id=user_id,
+                target_type="user",
+                target_id=str(user_id),
+            )
+            db.commit()
+            logout_user()
+            flash("Your account has been deleted.", "success")
+            return redirect(url_for("auth.login"))
+        except LicensingError as exc:
+            db.rollback()
+            flash(str(exc), "error")
+    else:
+        _flash_form_errors(form)
+    return redirect(url_for("auth.account_password"))

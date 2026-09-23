@@ -19,6 +19,10 @@ class ChangePasswordForm(FlaskForm):
     )
 
 
+class DeleteAccountForm(FlaskForm):
+    current_password = PasswordField("Password", validators=[DataRequired()])
+
+
 class RegistrationForm(FlaskForm):
     organization_name = StringField(
         "Organization name", validators=[DataRequired(), Length(max=200)]

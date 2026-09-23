@@ -36,6 +36,9 @@
     <div class="section">
         <h2>Security</h2>
 
+        {% if target.status.value == 'deleted' %}
+        <p class="muted">This account was deleted by the user and can't be modified.</p>
+        {% else %}
         <div class="button-row">
             {% if target.status.value == 'active' %}
             <form method="post" action="{{ url_for('users.disable', user_id=target.id) }}">
@@ -71,6 +74,7 @@
             </select>
             <button type="submit" class="btn btn-secondary">Update role</button>
         </form>
+        {% endif %}
     </div>
     {% endif %}
 </div>
