@@ -89,6 +89,7 @@ def create_app() -> Flask:
 
     from apps.web.account_links import bp as account_links_bp
     from apps.web.activate import bp as activate_bp
+    from apps.web.audit_log import bp as audit_bp
     from apps.web.auth import bp as auth_bp
     from apps.web.auth.session import load_current_user
     from apps.web.dashboard import bp as dashboard_bp
@@ -104,6 +105,7 @@ def create_app() -> Flask:
     app.register_blueprint(organizations_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(licenses_bp)
+    app.register_blueprint(audit_bp)
     register_error_handlers(app)
 
     @app.context_processor

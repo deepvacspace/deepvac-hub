@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from apps.api.audit import log_event
 from apps.api.dependencies import DeviceContext, get_db, get_device_context
 from licensing.schemas.alarm_rules import AlarmRuleIn, AlarmRuleListResponse, AlarmRuleOut
 from licensing.services import alarm_rules as alarm_rules_service
@@ -26,6 +27,7 @@ def list_alarm_rules(
 @router.post("/alarm-rules", response_model=AlarmRuleOut, status_code=201)
 def create_alarm_rule(
     payload: AlarmRuleIn,
+    request: Request,
     db: Session = Depends(get_db),
     device: DeviceContext = Depends(get_device_context),
 ) -> AlarmRuleOut:
@@ -44,6 +46,14 @@ def create_alarm_rule(
         enabled=payload.enabled,
         created_by_user_id=None,
     )
+    log_event(
+        request,
+        db,
+        event_type="alarm_rule_created",
+        organization_id=device.organization_id,
+        target_type="alarm_rule",
+        target_id=str(rule.id),
+    )
     return AlarmRuleOut.model_validate(rule)
 
 
@@ -51,6 +61,7 @@ def create_alarm_rule(
 def replace_alarm_rule(
     rule_id: uuid.UUID,
     payload: AlarmRuleIn,
+    request: Request,
     db: Session = Depends(get_db),
     device: DeviceContext = Depends(get_device_context),
 ) -> AlarmRuleOut:
@@ -67,5 +78,13 @@ def replace_alarm_rule(
         deadband=payload.deadband,
         delay_s=payload.delay_s,
         enabled=payload.enabled,
+    )
+    log_event(
+        request,
+        db,
+        event_type="alarm_rule_updated",
+        organization_id=device.organization_id,
+        target_type="alarm_rule",
+        target_id=str(rule.id),
     )
     return AlarmRuleOut.model_validate(rule)

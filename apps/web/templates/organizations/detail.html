@@ -4,8 +4,11 @@
 <div class="card wide">
     <div class="toolbar">
         <h1>{{ org.name }} <span class="badge status-{{ org.status.value }}">{{ org.status.value }}</span></h1>
-        {% if can_write %}
         <div class="button-row">
+            {% if can_admin %}
+            <a href="{{ url_for('organizations.notifications', organization_id=org.id) }}" class="btn btn-secondary">Notifications</a>
+            {% endif %}
+            {% if can_write %}
             {% if org.status.value == 'active' %}
             <form method="post" action="{{ url_for('organizations.disable', organization_id=org.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -17,8 +20,8 @@
                 <button type="submit" class="btn btn-secondary">Reactivate</button>
             </form>
             {% endif %}
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 
     <div class="section">

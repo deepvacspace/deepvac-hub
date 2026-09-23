@@ -28,7 +28,6 @@ ALLOWED_METADATA_KEYS: frozenset[str] = frozenset(
         "new_status",
         "signing_key_id",
         "activation_id",
-        "device_activation_id",
         "organization_license_id",
     }
 )

@@ -11,6 +11,7 @@ from licensing.database import get_scoped_session
 from licensing.exceptions import ConflictError, LicensingError, NotFoundError
 from licensing.models.enums import MembershipRole, OrganizationStatus
 from licensing.services import alarm_rules as alarm_rules_service
+from licensing.services import audit as audit_service
 from licensing.services import auth as auth_service
 from licensing.services import chambers as chambers_service
 from licensing.services import licenses as licenses_service
@@ -119,6 +120,21 @@ def detail(organization_id: uuid.UUID):
         edit_form=edit_form,
         membership_form=membership_form,
         membership_roles=MembershipRole,
+    )
+
+
+@bp.route("/<uuid:organization_id>/notifications", methods=["GET"])
+@login_required
+def notifications(organization_id: uuid.UUID):
+    db = get_scoped_session()
+    user = load_current_user()
+    org = organizations_service.get_organization(db, actor=user, organization_id=organization_id)
+    page = request.args.get("page", default=1, type=int)
+    page_result = audit_service.list_chamber_events_for_organization(
+        db, actor=user, organization_id=organization_id, page=page
+    )
+    return render_template(
+        "organizations/notifications.html", org=org, page_result=page_result
     )
 
 
