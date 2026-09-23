@@ -12,6 +12,7 @@ class UserStatus(StrEnum):
     PENDING = "pending"
     ACTIVE = "active"
     DISABLED = "disabled"
+    DELETED = "deleted"
 
 
 class OrganizationStatus(StrEnum):

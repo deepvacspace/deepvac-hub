@@ -7,14 +7,15 @@ themselves (creation, status, password, vendor role).
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from licensing.exceptions import ConflictError, NotFoundError
-from licensing.models.enums import MembershipStatus, UserStatus, VendorRole
+from licensing.models.enums import MembershipRole, MembershipStatus, UserStatus, VendorRole
 from licensing.models.organizations import OrganizationMembership
 from licensing.models.users import User
 from licensing.pagination import Page, paginate
@@ -26,6 +27,11 @@ MIN_PASSWORD_LENGTH = 12
 def _validate_password(password: str) -> None:
     if len(password) < MIN_PASSWORD_LENGTH:
         raise ConflictError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+
+
+def _require_not_deleted(user: User) -> None:
+    if user.status == UserStatus.DELETED:
+        raise ConflictError("This account has been deleted.")
 
 
 def create_user(
@@ -107,6 +113,7 @@ def set_user_status(
     user = session.get(User, user_id)
     if user is None:
         raise NotFoundError(f"User {user_id} not found.")
+    _require_not_deleted(user)
     user.status = status
     session.flush()
     return user
@@ -122,6 +129,7 @@ def set_user_password(
     user = session.get(User, user_id)
     if user is None:
         raise NotFoundError(f"User {user_id} not found.")
+    _require_not_deleted(user)
     user.password_hash = hash_password(new_password)
     session.flush()
     return user
@@ -134,6 +142,7 @@ def set_vendor_role(
     user = session.get(User, user_id)
     if user is None:
         raise NotFoundError(f"User {user_id} not found.")
+    _require_not_deleted(user)
     user.vendor_role = vendor_role
     session.flush()
     return user
@@ -151,3 +160,51 @@ def list_memberships_for_user(
             )
         ).scalars()
     )
+
+
+def _is_last_active_admin(
+    session: Session, *, organization_id: uuid.UUID, membership_id: uuid.UUID
+) -> bool:
+    other_admins = session.execute(
+        select(func.count()).where(
+            OrganizationMembership.organization_id == organization_id,
+            OrganizationMembership.role == MembershipRole.ORGANIZATION_ADMIN,
+            OrganizationMembership.status == MembershipStatus.ACTIVE,
+            OrganizationMembership.id != membership_id,
+        )
+    ).scalar_one()
+    return other_admins == 0
+
+
+def delete_own_account(session: Session, *, user: User, current_password: str) -> None:
+    """Self-service account deletion -- no vendor/org authorization needed,
+    the acting user is only ever touching their own account. Soft-deletes:
+    clears PII and marks the account deleted without removing the row."""
+    from licensing.exceptions import InvalidCredentialsError
+    from licensing.security.passwords import hash_password, verify_password
+
+    if not verify_password(current_password, user.password_hash):
+        raise InvalidCredentialsError("Password is incorrect.")
+
+    active_memberships = [m for m in user.memberships if m.status == MembershipStatus.ACTIVE]
+    for membership in active_memberships:
+        if membership.role == MembershipRole.ORGANIZATION_ADMIN and _is_last_active_admin(
+            session, organization_id=membership.organization_id, membership_id=membership.id
+        ):
+            raise ConflictError(
+                "You are the last admin of an organization you belong to. "
+                "Promote another member to admin before deleting your account."
+            )
+
+    now = datetime.now(UTC)
+    for membership in active_memberships:
+        membership.status = MembershipStatus.REMOVED
+        membership.removed_at = now
+
+    user.display_name = "Deleted user"
+    user.email = f"deleted-{user.id}@deleted.invalid"
+    user.normalized_email = f"deleted-{user.id}@deleted.invalid"
+    user.password_hash = hash_password(secrets.token_urlsafe(32))
+    user.vendor_role = None
+    user.status = UserStatus.DELETED
+    session.flush()

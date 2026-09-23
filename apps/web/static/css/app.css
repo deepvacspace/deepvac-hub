@@ -241,6 +241,7 @@ table.data a:hover { text-decoration: underline; }
 .badge.status-suspended,
 .badge.status-revoked,
 .badge.status-removed,
+.badge.status-deleted,
 .badge.status-expired { background: rgba(255, 111, 125, 0.15); color: var(--danger); }
 
 .stat-grid {

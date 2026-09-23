@@ -13,6 +13,7 @@
             <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
             <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
             <option value="disabled" {% if status == 'disabled' %}selected{% endif %}>Disabled</option>
+            <option value="deleted" {% if status == 'deleted' %}selected{% endif %}>Deleted</option>
         </select>
         <button type="submit" class="btn btn-secondary">Filter</button>
     </form>
